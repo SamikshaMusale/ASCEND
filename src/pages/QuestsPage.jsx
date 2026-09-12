@@ -107,7 +107,7 @@ export default function QuestsPage() {
 
         {/* Quest List */}
         <div className="space-y-3">
-          <AnimatePresence>
+          <AnimatePresence mode="popLayout">
             {filteredQuests.length > 0 ? (
               filteredQuests.map(quest => (
                 <QuestCard

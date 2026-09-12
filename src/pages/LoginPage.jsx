@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Swords, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Swords, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
@@ -25,6 +26,24 @@ export default function LoginPage() {
       setError(err.message || 'Failed to login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    setDemoLoading(true);
+    setError('');
+    const demoEmail = import.meta.env.VITE_DEMO_EMAIL || 'samikshamusale.11+demo@gmail.com';
+    const demoPassword = import.meta.env.VITE_DEMO_PASSWORD || 'AscendDemo123!';
+    try {
+      await signIn(demoEmail, demoPassword);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to login with Demo Account');
+    } finally {
+      setLoading(false);
+      setDemoLoading(false);
     }
   };
 
@@ -99,13 +118,39 @@ export default function LoginPage() {
             </div>
 
             <Button type="submit" variant="primary" className="w-full flex items-center justify-center gap-2" disabled={loading}>
-              {loading ? (
+              {loading && !demoLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>Login <ArrowRight size={16} /></>
               )}
             </Button>
           </form>
+
+          <div className="relative my-6 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative px-3 bg-surface-dark/95 text-xs text-gray-500 uppercase tracking-wider">
+              Or
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleDemoLogin}
+            className="w-full flex items-center justify-center gap-2 border-accent-purple/40 hover:bg-accent-purple/20"
+            disabled={loading}
+          >
+            {demoLoading ? (
+              <div className="w-5 h-5 border-2 border-accent-purple-light/30 border-t-accent-purple-light rounded-full animate-spin" />
+            ) : (
+              <>
+                <Sparkles size={16} className="text-accent-purple-light" />
+                Use Demo Account
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Footer */}

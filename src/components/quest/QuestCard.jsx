@@ -27,11 +27,11 @@ export default function QuestCard({ quest, onComplete, onEdit, onDelete, showAct
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className={`glass-card-hover p-5 ${quest.completed ? 'opacity-60' : ''}`}
+      transition={{ duration: 0.2 }}
+      className={`glass-card-hover p-5 transform-gpu ${quest.completed ? 'opacity-60' : ''}`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">

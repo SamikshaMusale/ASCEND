@@ -46,12 +46,12 @@ body {
 /* Glass Card Utility */
 @layer components {
   .glass-card {
-    @apply bg-surface-card/80 backdrop-blur-md border border-white/5 rounded-xl;
+    @apply bg-surface-card/95 border border-white/5 rounded-xl;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-300;
+    @apply glass-card transition-colors duration-200;
   }
 
   .glass-card-hover:hover {
