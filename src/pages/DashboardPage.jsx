@@ -12,7 +12,7 @@ import BossSection from '../components/gamification/BossSection';
 import { useGame } from '../context/GameContext';
 import { getLevelProgress } from '../utils/progression';
 
-const FloatingCrystal = lazy(() => import('../components/three/FloatingCrystal'));
+const ChibiMascot = lazy(() => import('../components/three/ChibiMascot'));
 
 export default function DashboardPage() {
   const { character, quests, activity, streak, dailyBoss, completeQuest } = useGame();
@@ -35,10 +35,10 @@ export default function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               className="glass-card p-6 sm:p-8 relative overflow-hidden"
             >
-              {/* Background Crystal */}
-              <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-40 hidden sm:block pointer-events-none">
+              {/* Mascot Character */}
+              <div className="absolute right-0 top-0 bottom-0 w-[50%] md:w-[45%] hidden sm:block z-0">
                 <Suspense fallback={null}>
-                  <FloatingCrystal height="100%" />
+                  <ChibiMascot height="100%" />
                 </Suspense>
               </div>
 
