@@ -33,7 +33,7 @@ export default function RegisterPage() {
       // Pass username in user_metadata if needed, but not strictly required here
       // since the backend handles public.users creation.
       await signUp(form.email, form.password);
-      setMessage('Registration successful! Check your email if confirmation is required.');
+      setMessage('Registration successful! Your adventure begins now. ⚔️');
       // Optional: navigate('/dashboard') if auto-confirm is on
       // navigate('/dashboard');
     } catch (err) {
