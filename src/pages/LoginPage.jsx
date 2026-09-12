@@ -3,23 +3,29 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swords, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import Button from '../components/ui/Button';
-import { useGame } from '../context/GameContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useGame();
+  const { signIn } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // MOCK: simulate login delay
-    await new Promise(r => setTimeout(r, 800));
-    login({ email: form.email });
-    setLoading(false);
-    navigate('/dashboard');
+    setError('');
+    try {
+      await signIn(form.email, form.password);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to login');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,6 +52,11 @@ export default function LoginPage() {
         {/* Form Card */}
         <div className="glass-card p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm">
+                {error}
+              </div>
+            )}
             <div>
               <label htmlFor="login-email" className="label-text mb-2 block">Email</label>
               <div className="relative">

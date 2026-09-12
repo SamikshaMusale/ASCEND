@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { GameProvider } from './context/GameContext';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import ToastContainer from './components/ui/ToastContainer';
 import LevelUpModal from './components/gamification/LevelUpModal';
 
@@ -27,23 +29,25 @@ function PageLoader() {
 export default function App() {
   return (
     <BrowserRouter>
-      <GameProvider>
-        <div className="min-h-screen bg-surface-dark bg-grid-pattern">
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/quests" element={<QuestsPage />} />
-              <Route path="/character" element={<CharacterPage />} />
-              <Route path="/loot-vault" element={<LootVaultPage />} />
-            </Routes>
-          </Suspense>
-          <ToastContainer />
-          <LevelUpModal />
-        </div>
-      </GameProvider>
+      <AuthProvider>
+        <GameProvider>
+          <div className="min-h-screen bg-surface-dark bg-grid-pattern">
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/quests" element={<ProtectedRoute><QuestsPage /></ProtectedRoute>} />
+                <Route path="/character" element={<ProtectedRoute><CharacterPage /></ProtectedRoute>} />
+                <Route path="/loot-vault" element={<ProtectedRoute><LootVaultPage /></ProtectedRoute>} />
+              </Routes>
+            </Suspense>
+            <ToastContainer />
+            <LevelUpModal />
+          </div>
+        </GameProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
