@@ -2,7 +2,14 @@ import { motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
 
 export default function StreakDisplay({ streak }) {
-  const { current, days } = streak;
+  const defaultDays = [
+    { day: 'M', completed: false },
+    { day: 'T', completed: false },
+    { day: 'W', completed: false },
+    { day: 'T', completed: false },
+    { day: 'F', completed: false },
+  ];
+  const { current, days = defaultDays } = streak || {};
 
   return (
     <div className="glass-card p-5">

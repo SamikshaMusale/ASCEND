@@ -18,7 +18,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     setMessage('');
-    
+
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -27,15 +27,15 @@ export default function RegisterPage() {
       setError('Password must be at least 6 characters.');
       return;
     }
-    
+
     setLoading(true);
     try {
-      // Pass username in user_metadata if needed, but not strictly required here
-      // since the backend handles public.users creation.
-      await signUp(form.email, form.password);
-      setMessage('Registration successful! Your adventure begins now. ⚔️');
-      // Optional: navigate('/dashboard') if auto-confirm is on
-      // navigate('/dashboard');
+      const data = await signUp(form.email, form.password, form.username);
+      if (data?.session) {
+        navigate('/dashboard');
+      } else {
+        setMessage('Registration successful! Your adventure begins now. ⚔️');
+      }
     } catch (err) {
       console.error(err);
       setError(err.message || 'Registration failed.');
@@ -147,7 +147,7 @@ export default function RegisterPage() {
                 {error}
               </motion.p>
             )}
-            
+
             {message && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-green-500">
                 {message}
