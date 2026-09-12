@@ -1,12 +1,13 @@
 // ========================================
 // ASCEND — Game Context (Global State)
-// MOCK FRONTEND LOGIC — state management for demo.
-// Authoritative game logic will move to FastAPI.
+// Backend-connected: fetches from FastAPI,
+// delegates authoritative logic to the server.
 // ========================================
 
-import { createContext, useContext, useReducer, useCallback } from 'react';
-import { mockCharacter, mockQuests, mockAchievements, mockLootItems, mockActivity, mockStreak, mockDailyBoss } from '../data/mockData';
-import { getLevelFromTotalXp, getLevelProgress } from '../utils/progression';
+import { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { getLevelFromTotalXp } from '../utils/progression';
+import * as api from '../services/api';
 
 const GameContext = createContext(null);
 
@@ -16,30 +17,53 @@ const initialState = {
   user: null,
 
   // Character
-  character: { ...mockCharacter },
+  character: {
+    id: '',
+    username: '',
+    characterName: '',
+    email: '',
+    level: 1,
+    totalXp: 0,
+    gold: 0,
+    streak: 0,
+    lastActivityDate: null,
+    attributes: {
+      intellect: 0,
+      strength: 0,
+      vitality: 0,
+      creativity: 0,
+    },
+  },
 
   // Quests
-  quests: [...mockQuests],
+  quests: [],
 
   // Achievements
-  achievements: [...mockAchievements],
+  achievements: [],
 
   // Loot
-  lootItems: [...mockLootItems],
+  lootItems: [],
 
   // Activity
-  activity: [...mockActivity],
+  activity: [],
 
   // Streak
-  streak: { ...mockStreak },
+  streak: { current: 0, lastActivityDate: null },
 
-  // Daily Boss
-  dailyBoss: { ...mockDailyBoss },
+  // Daily Boss (computed client-side from quests)
+  dailyBoss: {
+    name: 'The Procrastination Beast',
+    totalQuests: 3,
+    description: 'Complete 3 quests today to defeat the boss.',
+  },
 
   // UI State
   toasts: [],
   showLevelUp: false,
   levelUpData: null,
+
+  // Loading
+  loading: true,
 };
 
 function gameReducer(state, action) {
@@ -54,75 +78,100 @@ function gameReducer(state, action) {
     }
     case 'LOGOUT': {
       return {
-        ...state,
+        ...initialState,
         isAuthenticated: false,
-        user: null,
+        loading: false,
       };
     }
 
-    // ---- QUEST COMPLETION ----
-    // MOCK FRONTEND LOGIC: XP/Gold/Attribute updates computed client-side
-    case 'COMPLETE_QUEST': {
-      const quest = state.quests.find(q => q.id === action.payload);
-      if (!quest || quest.completed) return state;
+    // ---- DATA LOADED FROM BACKEND ----
+    case 'SET_DASHBOARD': {
+      const { character, todayQuests, activity, streak } = action.payload;
+      return {
+        ...state,
+        character,
+        activity,
+        streak,
+        loading: false,
+      };
+    }
+    case 'SET_QUESTS': {
+      return { ...state, quests: action.payload, loading: false };
+    }
+    case 'SET_CHARACTER': {
+      return {
+        ...state,
+        character: action.payload.character,
+        achievements: action.payload.achievements,
+        loading: false,
+      };
+    }
+    case 'SET_SHOP': {
+      return { ...state, lootItems: action.payload, loading: false };
+    }
+    case 'SET_LOADING': {
+      return { ...state, loading: action.payload };
+    }
 
+    // ---- QUEST COMPLETION (from backend response) ----
+    case 'COMPLETE_QUEST': {
+      const { quest, rewards, newLevel, leveledUp } = action.payload;
+
+      // Update quest in local list
       const updatedQuests = state.quests.map(q =>
-        q.id === action.payload ? { ...q, completed: true } : q
+        q.id === quest.id ? quest : q
       );
 
-      const oldLevel = getLevelFromTotalXp(state.character.totalXp);
-      const newTotalXp = state.character.totalXp + quest.xpReward;
-      const newGold = state.character.gold + quest.goldReward;
-      const newLevel = getLevelFromTotalXp(newTotalXp);
+      // Update character with new values
+      const newCharacter = {
+        ...state.character,
+        totalXp: state.character.totalXp + rewards.xp,
+        gold: state.character.gold + rewards.gold,
+        level: newLevel,
+        attributes: {
+          ...state.character.attributes,
+          [rewards.attribute]: (state.character.attributes[rewards.attribute] || 0) + rewards.attributePoints,
+        },
+      };
 
-      const newAttributes = { ...state.character.attributes };
-      if (quest.attributeReward) {
-        const attr = quest.attributeReward.attribute;
-        newAttributes[attr] = (newAttributes[attr] || 0) + quest.attributeReward.points;
-      }
-
+      // Add activity entries
       const newActivity = [
         {
           id: 'act-' + Date.now(),
           type: 'xp',
           text: `${quest.name} completed`,
-          value: `+${quest.xpReward} XP`,
+          value: `+${rewards.xp} XP`,
           timestamp: new Date().toISOString(),
         },
         {
           id: 'act-' + (Date.now() + 1),
           type: 'gold',
           text: 'Quest reward',
-          value: `+${quest.goldReward} Gold`,
+          value: `+${rewards.gold} Gold`,
           timestamp: new Date().toISOString(),
         },
         ...state.activity,
       ].slice(0, 10);
 
+      // Toast
       const newToast = {
         id: 'toast-' + Date.now(),
         type: 'success',
         title: 'Quest Complete!',
-        message: `+${quest.xpReward} XP  •  +${quest.goldReward} Gold`,
+        message: `+${rewards.xp} XP  •  +${rewards.gold} Gold`,
       };
 
       let showLevelUp = false;
       let levelUpData = null;
-      if (newLevel > oldLevel) {
+      if (leveledUp) {
         showLevelUp = true;
-        levelUpData = { oldLevel, newLevel };
+        levelUpData = { oldLevel: state.character.level, newLevel };
       }
 
       return {
         ...state,
         quests: updatedQuests,
-        character: {
-          ...state.character,
-          totalXp: newTotalXp,
-          gold: newGold,
-          level: newLevel,
-          attributes: newAttributes,
-        },
+        character: newCharacter,
         activity: newActivity,
         toasts: [...state.toasts, newToast],
         showLevelUp,
@@ -152,20 +201,18 @@ function gameReducer(state, action) {
       };
     }
 
-    // ---- LOOT PURCHASE ----
-    // MOCK FRONTEND LOGIC: Gold deduction computed client-side
+    // ---- LOOT PURCHASE (from backend response) ----
     case 'PURCHASE_ITEM': {
-      const item = state.lootItems.find(i => i.id === action.payload);
-      if (!item || item.purchased || state.character.gold < item.price) return state;
+      const { item, remainingGold } = action.payload;
 
       return {
         ...state,
         character: {
           ...state.character,
-          gold: state.character.gold - item.price,
+          gold: remainingGold,
         },
         lootItems: state.lootItems.map(i =>
-          i.id === action.payload ? { ...i, purchased: true } : i
+          i.id === item.id ? { ...i, purchased: true } : i
         ),
         toasts: [
           ...state.toasts,
@@ -207,31 +254,158 @@ function gameReducer(state, action) {
 
 export function GameProvider({ children }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  const { user: authUser, session } = useAuth();
 
-  const completeQuest = useCallback((questId) => {
-    dispatch({ type: 'COMPLETE_QUEST', payload: questId });
+  // ---- Fetch data from backend when authenticated ----
+  useEffect(() => {
+    if (!session?.access_token) {
+      dispatch({ type: 'LOGOUT' });
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadData() {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        // Fetch all data in parallel
+        const [dashData, questsData, charData, shopData] = await Promise.all([
+          api.getDashboard(),
+          api.getQuests(),
+          api.getCharacter(),
+          api.getShop(),
+        ]);
+
+        if (cancelled) return;
+
+        dispatch({ type: 'LOGIN', payload: authUser });
+        dispatch({ type: 'SET_DASHBOARD', payload: dashData });
+        dispatch({ type: 'SET_QUESTS', payload: questsData });
+        dispatch({ type: 'SET_CHARACTER', payload: charData });
+        dispatch({ type: 'SET_SHOP', payload: shopData });
+      } catch (err) {
+        // If user profile doesn't exist yet (e.g. existing Supabase user before backend was added)
+        if (err.status === 404 && authUser?.email) {
+          try {
+            console.log('Backend profile missing. Auto-registering...');
+            await api.registerUser({
+              username: authUser.email.split('@')[0],
+              email: authUser.email
+            });
+            
+            // Retry fetching data
+            const [dashData, questsData, charData, shopData] = await Promise.all([
+              api.getDashboard(),
+              api.getQuests(),
+              api.getCharacter(),
+              api.getShop(),
+            ]);
+
+            if (cancelled) return;
+
+            dispatch({ type: 'LOGIN', payload: authUser });
+            dispatch({ type: 'SET_DASHBOARD', payload: dashData });
+            dispatch({ type: 'SET_QUESTS', payload: questsData });
+            dispatch({ type: 'SET_CHARACTER', payload: charData });
+            dispatch({ type: 'SET_SHOP', payload: shopData });
+            return;
+          } catch (retryErr) {
+            console.error('Auto-registration failed:', retryErr);
+          }
+        }
+
+        console.error('Failed to load game data:', err);
+        if (!cancelled) {
+          dispatch({ type: 'SET_LOADING', payload: false });
+          if (err.status === 404) {
+            dispatch({ type: 'LOGIN', payload: authUser });
+          }
+        }
+      }
+    }
+
+    loadData();
+
+    return () => { cancelled = true; };
+  }, [session?.access_token, authUser]);
+
+  // ---- ACTIONS: delegate to backend, then update local state ----
+
+  const completeQuest = useCallback(async (questId) => {
+    try {
+      const result = await api.completeQuest(questId);
+      dispatch({ type: 'COMPLETE_QUEST', payload: result });
+    } catch (err) {
+      console.error('Failed to complete quest:', err);
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          id: 'toast-err-' + Date.now(),
+          type: 'error',
+          title: 'Error',
+          message: err.message || 'Failed to complete quest.',
+        },
+      });
+    }
   }, []);
 
-  const addQuest = useCallback((quest) => {
-    const newQuest = {
-      id: 'quest-' + Date.now(),
-      ...quest,
-      completed: false,
-      createdAt: new Date().toISOString(),
-    };
-    dispatch({ type: 'ADD_QUEST', payload: newQuest });
+  const addQuest = useCallback(async (questData) => {
+    try {
+      const newQuest = await api.createQuest(questData);
+      dispatch({ type: 'ADD_QUEST', payload: newQuest });
+    } catch (err) {
+      console.error('Failed to create quest:', err);
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          id: 'toast-err-' + Date.now(),
+          type: 'error',
+          title: 'Error',
+          message: err.message || 'Failed to create quest.',
+        },
+      });
+    }
   }, []);
 
   const updateQuest = useCallback((quest) => {
+    // Update locally; backend doesn't have PUT /quests/{id} yet
     dispatch({ type: 'UPDATE_QUEST', payload: quest });
   }, []);
 
-  const deleteQuest = useCallback((questId) => {
-    dispatch({ type: 'DELETE_QUEST', payload: questId });
+  const deleteQuest = useCallback(async (questId) => {
+    try {
+      await api.deleteQuest(questId);
+      dispatch({ type: 'DELETE_QUEST', payload: questId });
+    } catch (err) {
+      console.error('Failed to delete quest:', err);
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          id: 'toast-err-' + Date.now(),
+          type: 'error',
+          title: 'Error',
+          message: err.message || 'Failed to delete quest.',
+        },
+      });
+    }
   }, []);
 
-  const purchaseItem = useCallback((itemId) => {
-    dispatch({ type: 'PURCHASE_ITEM', payload: itemId });
+  const purchaseItem = useCallback(async (itemId) => {
+    try {
+      const result = await api.purchaseItem(itemId);
+      dispatch({ type: 'PURCHASE_ITEM', payload: result });
+    } catch (err) {
+      console.error('Failed to purchase item:', err);
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          id: 'toast-err-' + Date.now(),
+          type: 'error',
+          title: 'Error',
+          message: err.message || 'Failed to purchase item.',
+        },
+      });
+    }
   }, []);
 
   const login = useCallback((userData) => {
@@ -278,5 +452,3 @@ export function useGame() {
   }
   return context;
 }
-
-export default GameContext;
