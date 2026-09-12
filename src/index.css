@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   ASCEND — Global Styles
+   RPG Dark Futuristic Theme
+   ======================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0a0a0f;
+  color: #e2e8f0;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+/* Glass Card Utility */
+@layer components {
+  .glass-card {
+    @apply bg-surface-card/80 backdrop-blur-md border border-white/5 rounded-xl;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+
+  .glass-card-hover:hover {
+    @apply border-accent-purple/30;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(139, 92, 246, 0.1);
+  }
+
+  .text-gradient-purple {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-purple to-accent-purple-light;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-gold to-accent-gold-light;
+  }
+
+  .text-gradient-hero {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-purple via-accent-purple-light to-accent-gold;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-accent-purple to-accent-purple-dark 
+           text-white font-semibold rounded-lg 
+           hover:shadow-glow-purple transition-all duration-300
+           focus:outline-none focus:ring-2 focus:ring-accent-purple/50;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 border border-accent-purple/30 text-accent-purple-light 
+           font-semibold rounded-lg hover:bg-accent-purple/10 
+           transition-all duration-300
+           focus:outline-none focus:ring-2 focus:ring-accent-purple/50;
+  }
+
+  .btn-gold {
+    @apply px-6 py-3 bg-gradient-to-r from-accent-gold to-accent-gold-dark 
+           text-surface-dark font-semibold rounded-lg 
+           hover:shadow-glow-gold transition-all duration-300
+           focus:outline-none focus:ring-2 focus:ring-accent-gold/50;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-surface-dark/80 border border-white/10 rounded-lg
+           text-white placeholder-gray-500
+           focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/30
+           transition-all duration-200;
+  }
+
+  .section-title {
+    @apply font-display text-2xl font-bold tracking-wider uppercase text-white;
+  }
+
+  .label-text {
+    @apply text-sm font-medium text-gray-400 uppercase tracking-wider;
+  }
+}
+
+/* Background Pattern */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Glow Ring Animation */
+@keyframes glow-ring {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 92, 246, 0.2), 0 0 20px rgba(139, 92, 246, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4), 0 0 40px rgba(139, 92, 246, 0.2);
+  }
+}
+
+.animate-glow-ring {
+  animation: glow-ring 3s ease-in-out infinite;
+}
