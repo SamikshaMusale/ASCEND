@@ -1,4 +1,4 @@
-import{r as Be,f as ux,j as Rt}from"./index-CBNmuyyf.js";/**
+import{r as Be,f as ux,j as Rt}from"./index-BvbI7C43.js";/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT
