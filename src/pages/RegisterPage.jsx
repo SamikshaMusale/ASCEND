@@ -3,19 +3,22 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swords, Mail, Lock, User, ArrowRight, Eye, EyeOff, Shield } from 'lucide-react';
 import Button from '../components/ui/Button';
-import { useGame } from '../context/GameContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { login } = useGame();
+  const { signUp } = useAuth();
   const [form, setForm] = useState({ username: '', email: '', password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setMessage('');
+    
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -24,11 +27,21 @@ export default function RegisterPage() {
       setError('Password must be at least 6 characters.');
       return;
     }
+    
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
-    login({ username: form.username, email: form.email });
-    setLoading(false);
-    navigate('/dashboard');
+    try {
+      // Pass username in user_metadata if needed, but not strictly required here
+      // since the backend handles public.users creation.
+      await signUp(form.email, form.password);
+      setMessage('Registration successful! Check your email if confirmation is required.');
+      // Optional: navigate('/dashboard') if auto-confirm is on
+      // navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Registration failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -132,6 +145,12 @@ export default function RegisterPage() {
             {error && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-semantic-error">
                 {error}
+              </motion.p>
+            )}
+            
+            {message && (
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-green-500">
+                {message}
               </motion.p>
             )}
 

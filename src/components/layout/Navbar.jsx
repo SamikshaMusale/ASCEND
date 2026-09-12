@@ -4,6 +4,7 @@ import { Swords, User, ScrollText, ShoppingBag, LayoutDashboard, LogOut, Menu, X
 import { useState } from 'react';
 import GoldDisplay from '../ui/GoldDisplay';
 import { useGame } from '../../context/GameContext';
+import { useAuth } from '../../context/AuthContext';
 
 const navLinks = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -16,9 +17,15 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { character, streak, logout } = useGame();
+  const { signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (err) {
+      console.error('Error signing out:', err);
+    }
     logout();
     navigate('/');
   };
