@@ -27,7 +27,7 @@ class ErrorBoundary extends React.Component {
 
 function GLBMascot() {
   const group = useRef();
-  const { scene } = useGLTF('public/models/ascend-character.glb');
+  const { scene } = useGLTF('/models/ascend-character.glb');
 
   // Clone scene to avoid sharing materials state unnecessarily, though not strictly required for a single instance
   const clonedScene = useMemo(() => {

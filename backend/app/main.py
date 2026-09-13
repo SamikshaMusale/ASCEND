@@ -55,7 +55,7 @@ app = FastAPI(
 
 # CORS — allow the Vite dev frontend (supports multiple ports)
 _cors_origins = [
-    origin.strip()
+    origin.strip().rstrip("/")
     for origin in settings.FRONTEND_URL.split(",")
     if origin.strip()
 ]
